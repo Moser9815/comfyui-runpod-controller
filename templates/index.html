@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ComfyUI Control</title>
+    {% if google_client_id %}
+    <script src="https://accounts.google.com/gsi/client" async></script>
+    {% endif %}
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        /* Login screen */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+        }
+
+        .login-screen h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .login-screen p {
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 30px;
+        }
+
+        #g_id_signin {
+            margin: 20px 0;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .user-email {
+            opacity: 0.8;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #f87171;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .status-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #666;
+        }
+
+        .status-dot.running { background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+        .status-dot.starting { background: #facc15; animation: pulse 1s infinite; }
+        .status-dot.stopped { background: #f87171; }
+        .status-dot.none { background: #666; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .status-details {
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.6;
+        }
+
+        .tier-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tier-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: transparent;
+            color: #fff;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tier-btn.selected {
+            border-color: #818cf8;
+            background: rgba(129, 140, 248, 0.2);
+        }
+
+        .tier-btn:active {
+            transform: scale(0.98);
+        }
+
+        .tier-price {
+            font-size: 11px;
+            opacity: 0.7;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+            color: #fff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+            border: 2px solid #f87171;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        .setup-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .setup-section h3 {
+            font-size: 14px;
+            margin: 0 0 10px 0;
+            opacity: 0.8;
+        }
+
+        .setup-command {
+            background: #000;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .message.success { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .message.error { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+        .message.info { background: rgba(129, 140, 248, 0.2); color: #818cf8; }
+
+        .hidden { display: none !important; }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ComfyUI Control</h1>
+
+        <!-- Login Screen (shown when auth required and not logged in) -->
+        <div class="login-screen hidden" id="loginScreen">
+            <h2>Sign in to continue</h2>
+            <p>Only authorized users can control ComfyUI</p>
+            <div id="g_id_signin"></div>
+        </div>
+
+        <!-- Main App (shown when authenticated or no auth required) -->
+        <div class="app-content hidden" id="appContent">
+
+            <div class="user-info hidden" id="userInfo">
+                <span class="user-email" id="userEmail"></span>
+                <button class="logout-btn" onclick="logout()">Sign out</button>
+            </div>
+
+            <div class="status-card">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span class="status-text" id="statusText">Checking...</span>
+                </div>
+                <div class="status-details" id="statusDetails"></div>
+            </div>
+
+            <div class="tier-selector" id="tierSelector">
+                <button class="tier-btn" data-tier="budget">
+                    Budget
+                    <span class="tier-price">$0.22-0.34/hr</span>
+                </button>
+                <button class="tier-btn selected" data-tier="high">
+                    High
+                    <span class="tier-price">$0.44-0.59/hr</span>
+                </button>
+                <button class="tier-btn" data-tier="ultra">
+                    Ultra
+                    <span class="tier-price">$0.89-2.49/hr</span>
+                </button>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" id="startBtn" onclick="startPod()">
+                    Start ComfyUI
+                </button>
+
+                <button class="btn btn-success hidden" id="openBtn" onclick="openComfyUI()">
+                    Open ComfyUI
+                </button>
+
+                <div class="btn-row">
+                    <button class="btn btn-secondary hidden" id="consoleBtn" onclick="openConsole()">
+                        RunPod Console
+                    </button>
+                    <button class="btn btn-danger hidden" id="stopBtn" onclick="stopPod()">
+                        Stop
+                    </button>
+                </div>
+
+                <button class="btn btn-danger hidden" id="terminateBtn" onclick="terminatePod()" style="background: transparent; border: 1px solid #f87171; margin-top: 8px;">
+                    Terminate Pod
+                </button>
+            </div>
+
+            <div class="setup-section hidden" id="setupSection">
+                <h3>Setup runs automatically. Manual command (if needed):</h3>
+                <div class="setup-command" id="setupCommand"></div>
+                <button class="btn btn-secondary" onclick="copySetupCommand()">
+                    Copy Command
+                </button>
+            </div>
+
+            <div class="message hidden" id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        const AUTH_REQUIRED = {{ 'true' if auth_required else 'false' }};
+        const GOOGLE_CLIENT_ID = '{{ google_client_id }}';
+
+        let currentStatus = null;
+        let selectedTier = 'high';
+        let comfyUrl = null;
+        let consoleUrl = null;
+        let isAuthenticated = false;
+
+        // Initialize Google Sign-In
+        {% if google_client_id %}
+        window.onload = function() {
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleCredentialResponse,
+                auto_select: true,
+            });
+            google.accounts.id.renderButton(
+                document.getElementById('g_id_signin'),
+                { theme: 'filled_blue', size: 'large', width: 250 }
+            );
+            checkAuthStatus();
+        };
+        {% else %}
+        window.onload = function() {
+            showApp();
+        };
+        {% endif %}
+
+        async function handleCredentialResponse(response) {
+            try {
+                const res = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({credential: response.credential})
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    isAuthenticated = true;
+                    showApp(data.email, data.name);
+                } else {
+                    showMessage(data.message || 'Access denied', 'error');
+                }
+            } catch (e) {
+                showMessage('Authentication failed', 'error');
+            }
+        }
+
+        async function checkAuthStatus() {
+            try {
+                const res = await fetch('/api/auth/status');
+                const data = await res.json();
+
+                if (!data.auth_required || data.authenticated) {
+                    isAuthenticated = true;
+                    showApp(data.email, data.name);
+                } else {
+                    showLogin();
+                }
+            } catch (e) {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('appContent').classList.add('hidden');
+        }
+
+        function showApp(email, name) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('appContent').classList.remove('hidden');
+
+            if (AUTH_REQUIRED && email) {
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('userEmail').textContent = name || email;
+            }
+
+            fetchStatus();
+        }
+
+        async function logout() {
+            await fetch('/api/auth/logout', {method: 'POST'});
+            isAuthenticated = false;
+            google.accounts.id.disableAutoSelect();
+            showLogin();
+        }
+
+        // Tier selection
+        document.querySelectorAll('.tier-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedTier = btn.dataset.tier;
+            });
+        });
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                if (res.status === 401) {
+                    showLogin();
+                    return;
+                }
+                const data = await res.json();
+                updateUI(data);
+            } catch (e) {
+                showMessage('Failed to fetch status', 'error');
+            }
+        }
+
+        function updateUI(data) {
+            currentStatus = data;
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const details = document.getElementById('statusDetails');
+            const startBtn = document.getElementById('startBtn');
+            const openBtn = document.getElementById('openBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const consoleBtn = document.getElementById('consoleBtn');
+            const tierSelector = document.getElementById('tierSelector');
+            const setupSection = document.getElementById('setupSection');
+            const terminateBtn = document.getElementById('terminateBtn');
+
+            dot.className = 'status-dot';
+
+            if (!data.exists) {
+                dot.classList.add('none');
+                text.textContent = 'No Pod';
+                details.textContent = 'Create a pod to start using ComfyUI';
+                startBtn.classList.remove('hidden');
+                startBtn.textContent = 'Start ComfyUI';
+                openBtn.classList.add('hidden');
+                stopBtn.classList.add('hidden');
+                consoleBtn.classList.add('hidden');
+                tierSelector.classList.remove('hidden');
+                setupSection.classList.add('hidden');
+                terminateBtn.classList.add('hidden');
+            } else if (data.status === 'RUNNING' && data.comfy_ready) {
+                dot.classList.add('running');
+                text.textContent = 'ComfyUI Ready';
+                details.innerHTML = `GPU: ${data.gpu}<br>Cost: ${data.cost}`;
+                comfyUrl = data.url;
+                consoleUrl = data.console;
+                startBtn.classList.add('hidden');
+                openBtn.classList.remove('hidden');
+                stopBtn.classList.remove('hidden');
+                consoleBtn.classList.remove('hidden');
+                tierSelector.classList.add('hidden');
+                setupSection.classList.remove('hidden');
+                terminateBtn.classList.remove('hidden');
+                loadSetupCommand();
+            } else if (data.status === 'RUNNING') {
+                dot.classList.add('starting');
+                text.textContent = data.url ? 'ComfyUI Starting...' : 'Pod Starting...';
+                details.textContent = data.message || 'Setting up automatically. First run takes 5-10 min, restarts ~30 sec.';
+                comfyUrl = data.url;
+                consoleUrl = data.console;
+                startBtn.classList.add('hidden');
+                openBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                consoleBtn.classList.remove('hidden');
+                tierSelector.classList.add('hidden');
+                setupSection.classList.remove('hidden');
+                terminateBtn.classList.remove('hidden');
+                loadSetupCommand();
+            } else {
+                dot.classList.add('stopped');
+                text.textContent = 'Stopped';
+                details.textContent = 'Pod is stopped. Resume to continue.';
+                startBtn.classList.remove('hidden');
+                startBtn.textContent = 'Resume Pod';
+                openBtn.classList.add('hidden');
+                stopBtn.classList.add('hidden');
+                consoleBtn.classList.add('hidden');
+                tierSelector.classList.add('hidden');
+                setupSection.classList.add('hidden');
+                terminateBtn.classList.remove('hidden');
+            }
+        }
+
+        async function startPod() {
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Starting...';
+            hideMessage();
+
+            try {
+                const res = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tier: selectedTier})
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showMessage(data.message, 'success');
+                    pollStatus();
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (e) {
+                showMessage('Failed to start pod', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Start ComfyUI';
+            fetchStatus();
+        }
+
+        async function stopPod() {
+            if (!confirm('Stop the pod? You\'ll still pay ~$0.20/day for storage.')) return;
+
+            const btn = document.getElementById('stopBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const res = await fetch('/api/stop', {method: 'POST'});
+                const data = await res.json();
+                showMessage(data.message, data.success ? 'success' : 'error');
+            } catch (e) {
+                showMessage('Failed to stop pod', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Stop';
+            fetchStatus();
+        }
+
+        async function terminatePod() {
+            if (!confirm('Terminate the pod completely? You can create a new one later.')) return;
+
+            const btn = document.getElementById('terminateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const res = await fetch('/api/terminate', {method: 'POST'});
+                const data = await res.json();
+                showMessage(data.message, data.success ? 'success' : 'error');
+            } catch (e) {
+                showMessage('Failed to terminate pod', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Terminate Pod';
+            fetchStatus();
+        }
+
+        function openComfyUI() {
+            if (comfyUrl) window.open(comfyUrl, '_blank');
+        }
+
+        function openConsole() {
+            if (consoleUrl) window.open(consoleUrl, '_blank');
+        }
+
+        async function loadSetupCommand() {
+            try {
+                const res = await fetch('/api/setup-command');
+                const data = await res.json();
+                document.getElementById('setupCommand').textContent = data.command;
+            } catch (e) {}
+        }
+
+        async function copySetupCommand() {
+            const cmd = document.getElementById('setupCommand').textContent;
+            try {
+                await navigator.clipboard.writeText(cmd);
+                showMessage('Command copied!', 'success');
+            } catch (e) {
+                showMessage('Copy failed - select and copy manually', 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type}`;
+            msg.classList.remove('hidden');
+        }
+
+        function hideMessage() {
+            document.getElementById('message').classList.add('hidden');
+        }
+
+        function pollStatus() {
+            let polls = 0;
+            const interval = setInterval(() => {
+                fetchStatus();
+                polls++;
+                if (currentStatus?.ready || polls > 60) {
+                    clearInterval(interval);
+                }
+            }, 5000);
+        }
+
+        // Periodic refresh when authenticated
+        setInterval(() => {
+            if (isAuthenticated) fetchStatus();
+        }, 30000);
+    </script>
+</body>
+</html>
