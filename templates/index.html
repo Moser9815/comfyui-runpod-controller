@@ -519,11 +519,12 @@
                 dot.classList.add('stopped');
                 text.textContent = 'Stopped';
                 details.textContent = 'Pod is stopped. Resume to continue.';
+                consoleUrl = data.console;
                 startBtn.classList.remove('hidden');
                 startBtn.textContent = 'Resume Pod';
                 openBtn.classList.add('hidden');
                 stopBtn.classList.add('hidden');
-                consoleBtn.classList.add('hidden');
+                consoleBtn.classList.remove('hidden');
                 tierSelector.classList.add('hidden');
                 setupSection.classList.add('hidden');
                 terminateBtn.classList.remove('hidden');

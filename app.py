@@ -36,11 +36,11 @@ API_KEY = os.environ.get("RUNPOD_API_KEY", "")
 NETWORK_VOLUME_ID = os.environ.get("RUNPOD_VOLUME_ID", "")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 ALLOWED_EMAILS = os.environ.get("ALLOWED_EMAILS", "detroitinnovation@gmail.com").lower().split(",")
+CIVITAI_API_TOKEN = os.environ.get("CIVITAI_API_TOKEN", "")
 
 runpod.api_key = API_KEY
 
 POD_NAME = "comfyui-ondemand"
-SETUP_COMMAND = 'curl -sL https://gist.githubusercontent.com/Moser9815/b4517755d84d56d1829e3cf3e1676372/raw | bash'
 
 GPU_TIERS = {
     "budget": [
@@ -191,12 +191,12 @@ def api_status():
         "status": status,
         "gpu": gpu,
         "cost": f"${cost}/hr" if cost else "N/A",
+        "console": "https://www.runpod.io/console/pods",
     }
 
     if runtime and runtime.get("ports"):
         comfy_url = f"https://{pod['id']}-8188.proxy.runpod.net"
         result["url"] = comfy_url
-        result["console"] = f"https://www.runpod.io/console/pods"
 
         # Check if ComfyUI is actually responding
         comfy_healthy = check_comfyui_health(comfy_url)
@@ -251,6 +251,7 @@ def api_start():
                 container_disk_in_gb=20,
                 ports="8188/http,22/tcp",
                 volume_mount_path="/workspace",
+                env={"CIVITAI_API_TOKEN": CIVITAI_API_TOKEN},
             )
             return jsonify({
                 "success": True,
@@ -305,7 +306,12 @@ def api_terminate():
 @require_auth
 def api_setup_command():
     """Get the setup command for the web terminal"""
-    return jsonify({"command": SETUP_COMMAND})
+    gist_url = "https://gist.githubusercontent.com/Moser9815/b4517755d84d56d1829e3cf3e1676372/raw"
+    if CIVITAI_API_TOKEN:
+        command = f'export CIVITAI_API_TOKEN={CIVITAI_API_TOKEN} && curl -sL "{gist_url}?$(date +%s)" | bash'
+    else:
+        command = f'curl -sL "{gist_url}?$(date +%s)" | bash'
+    return jsonify({"command": command})
 
 
 if __name__ == "__main__":
