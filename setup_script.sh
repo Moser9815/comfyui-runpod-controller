@@ -99,7 +99,10 @@ fi
 
 # Install missing dependencies for custom nodes
 echo "  → Installing additional dependencies..."
-pip install PyWavelets gitpython dill piexif segment_anything -q
+pip install PyWavelets gitpython dill piexif -q
+# segment_anything needs --no-deps to avoid pulling a new PyTorch version
+pip install segment_anything --no-deps -q
+pip install opencv-python-headless -q
 echo "    ✓ Done"
 
 cd ..
