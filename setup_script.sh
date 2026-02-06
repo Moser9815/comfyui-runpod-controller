@@ -99,7 +99,7 @@ fi
 
 # Install missing dependencies for custom nodes
 echo "  → Installing additional dependencies..."
-pip install PyWavelets gitpython -q
+pip install PyWavelets gitpython dill piexif -q
 echo "    ✓ Done"
 
 cd ..
